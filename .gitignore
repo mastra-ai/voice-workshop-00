@@ -7,3 +7,4 @@ dist
 *.db
 *.db-*
 speech-to-speech-server.mp3
+speech-to-text.mp3
