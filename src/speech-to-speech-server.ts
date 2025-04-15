@@ -1,62 +1,75 @@
 import chalk from 'chalk';
 import { mastra } from './mastra';
 import { createHuddle } from '@mastra/node-audio';
+import type { Mastra } from '@mastra/core';
 
-async function speechToSpeechServerExample() {
+
+function createConversation({
+    mastra,
+    recordingPath,
+    providerOptions,
+    onSessionUpdated,
+    onSpeaker,
+    onResponseDone,
+    onError,
+    onWriting,
+    initialMessage,
+}: {
+    mastra: Mastra,
+    recordingPath: string,
+    providerOptions?: Record<string, unknown>,
+    onSessionUpdated?: (session: any) => Promise<void> | void,
+    onSpeaker?: (stream: any) => Promise<void> | void,
+    onResponseDone?: (item: any) => Promise<void> | void,
+    onError?: (error: any) => Promise<void> | void,
+    onWriting?: (ev: any) => void,
+    initialMessage?: string
+}) {
     const agent = mastra.getAgent('speechToSpeechServer');
 
-    const huddle = createHuddle({
-        record: {
-            outputPath: './speech-to-speech-server.mp3',
-        }
-    })
+    agent.voice.updateConfig(providerOptions ?? {})
 
-    agent.voice.updateConfig({
-        // TODO WE NEED THE TYPES FOR THIS
-        "turn_detection": {
-            "type": "server_vad",
-            "threshold": 0.7,
-            "prefix_padding_ms": 1500,
-            "silence_duration_ms": 800,
-            "create_response": true, // only in conversation mode
-            "interrupt_response": true, // only in conversation mode
-        }
-    })
-
+    // Set up session.updated event handler
     agent.voice.on('session.updated', async (session) => {
         console.log('Session updated', session)
+        if (onSessionUpdated) {
+            await onSessionUpdated(session);
+        }
     })
 
-    agent.voice.on('speaker', async (stream) => {
+    // Set up other event handlers
+
+    agent.voice.on('speaker', (stream) => {
         huddle.play(stream)
-    })
 
-    agent.voice.on("response.done", async (item) => {
-        // console.log('YOOOO', item)
-    })
-
-    agent.voice.on('error', async (error) => {
-        console.error(error)
-    })
-
-    agent.voice.on("writing", (ev) => {
-        const color = ev.role === "user" ? chalk.green : chalk.blue;
-        if (ev.role === 'assistant') {
-            process.stdout.write(color(ev.text));
+        if (onSpeaker) {
+            onSpeaker(stream);
         }
     });
 
-    await agent.voice.connect();
 
-    huddle.start()
+    if (onResponseDone) {
+        agent.voice.on('response.done', onResponseDone);
+    }
 
-    await agent.voice.speak('Howdy partner')
+    if (onError) {
+        agent.voice.on('error', onError);
+    }
 
-    agent.voice.send(huddle.getMicrophoneStream())
+    if (onWriting) {
+        agent.voice.on('writing', onWriting);
+    }
+
+    const huddle = createHuddle({
+        record: {
+            outputPath: recordingPath,
+        }
+    })
 
     // TODO: We need to listen for toolcall results
     huddle.on('recorder.end', async () => {
         // Get the audio file
+        // s3 upload
         // Upload it get a url back
         // this is where we need to transmit to Roark
         const recordingObject = {
@@ -96,8 +109,49 @@ async function speechToSpeechServerExample() {
         }
     })
 
-    process.on('SIGKILL', () => {
-        huddle.stop();
+    return {
+        agent, huddle, start: async () => {
+            await agent.voice.connect();
+            huddle.start()
+            agent.voice.send(huddle.getMicrophoneStream())
+
+            if (initialMessage) {
+                await agent.voice.speak(initialMessage)
+            }
+        },
+        stop: async () => {
+            huddle.stop()
+        }
+    };
+}
+
+async function speechToSpeechServerExample() {
+    const { start, stop } = createConversation({
+        mastra,
+        recordingPath: './recordings',
+        providerOptions: {},
+        initialMessage: 'Howdy partner',
+        onSessionUpdated: async (session) => {
+            // Additional custom session handling if needed
+        },
+        onResponseDone: async (item) => {
+            // console.log('YOOOO', item)
+        },
+        onError: async (error) => {
+            console.error(error)
+        },
+        onWriting: (ev) => {
+            const color = ev.role === "user" ? chalk.green : chalk.blue;
+            if (ev.role === 'assistant') {
+                process.stdout.write(color(ev.text));
+            }
+        }
+    });
+
+    await start();
+
+    process.on('SIGKILL', async () => {
+        await stop();
     })
 }
 
