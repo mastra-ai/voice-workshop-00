@@ -3,7 +3,6 @@ import { mastra } from './mastra';
 import { createHuddle } from '@mastra/node-audio';
 import type { Mastra } from '@mastra/core';
 
-
 function createConversation({
     mastra,
     recordingPath,
@@ -14,6 +13,8 @@ function createConversation({
     onError,
     onWriting,
     initialMessage,
+    metadata,
+    onConversationEnd
 }: {
     mastra: Mastra,
     recordingPath: string,
@@ -23,7 +24,19 @@ function createConversation({
     onResponseDone?: (item: any) => Promise<void> | void,
     onError?: (error: any) => Promise<void> | void,
     onWriting?: (ev: any) => void,
-    initialMessage?: string
+    initialMessage?: string,
+    metadata?: Record<string, string>,
+    onConversationEnd?: (props: {
+        recordingPath: string,
+        startedAt: string,
+        metadata?: Record<string, string>,
+        toolInvocations: any[],
+        agent: {
+            spokeFirst: boolean,
+            name: string,
+            phoneNumber: string
+        }
+    }) => Promise<void> | void,
 }) {
     const agent = mastra.getAgent('speechToSpeechServer');
 
@@ -66,26 +79,14 @@ function createConversation({
         }
     })
 
+    let startedAt = new Date().toISOString();
+
     // TODO: We need to listen for toolcall results
     huddle.on('recorder.end', async () => {
-        // Get the audio file
-        // s3 upload
-        // Upload it get a url back
-        // this is where we need to transmit to Roark
-        const recordingObject = {
-            recordingUrl: 'https://example.com/recording.wav',
-            startedAt: new Date().toISOString(),
-            callDirection: 'INBOUND',
-            interfaceType: 'PHONE',
-            participants: [
-                { role: 'AGENT', spokeFirst: true, name: 'John Doe', phoneNumber: '123456789' },
-                { role: 'CUSTOMER', name: 'Jane Doe', phoneNumber: '123456789' },
-            ],
-            properties: {
-                // Any custom properties
-                'business_name': 'customer-busines-name',
-                'business_id': 'customer-business-id'
-            },
+        onConversationEnd?.({
+            recordingPath,
+            metadata,
+            startedAt,
             toolInvocations: [
                 {
                     name: "bookAppointment",
@@ -105,8 +106,13 @@ function createConversation({
                     // Result can be a string or an object
                     result: "success",
                 },
-            ]
-        }
+            ],
+            agent: {
+                spokeFirst: !!initialMessage,
+                name: agent.name,
+                phoneNumber: '123456789'
+            }
+        })
     })
 
     return {
@@ -118,6 +124,8 @@ function createConversation({
             if (initialMessage) {
                 await agent.voice.speak(initialMessage)
             }
+
+            startedAt = new Date().toISOString();
         },
         stop: async () => {
             huddle.stop()
@@ -128,9 +136,14 @@ function createConversation({
 async function speechToSpeechServerExample() {
     const { start, stop } = createConversation({
         mastra,
-        recordingPath: './recordings',
+        recordingPath: './speech-to-speech-server.mp3',
         providerOptions: {},
         initialMessage: 'Howdy partner',
+        onConversationEnd: async (props) => {
+            // File upload
+            // Send to Roark
+
+        },
         onSessionUpdated: async (session) => {
             // Additional custom session handling if needed
         },
@@ -145,7 +158,8 @@ async function speechToSpeechServerExample() {
             if (ev.role === 'assistant') {
                 process.stdout.write(color(ev.text));
             }
-        }
+        },
+
     });
 
     await start();

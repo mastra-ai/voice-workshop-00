@@ -16,8 +16,8 @@ export const speechToSpeechServer = new Agent({
             description: 'Read the result of the tool',
             inputSchema: z.object({ name: z.string() }),
             outputSchema: z.object({ message: z.string() }),
-            execute: async (input) => {
-                return { message: `Hello ${input.name} you are fake.` }
+            execute: async ({ context }) => {
+                return { message: `Hello ${context.name} you are fake.` }
             }
         })
     }
