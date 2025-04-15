@@ -5,7 +5,7 @@ import { OpenAIRealtimeVoice } from '@mastra/voice-openai-realtime';
 import { z } from 'zod';
 import { OpenAIVoice } from '@mastra/voice-openai';
 
-export const textToSpeech = new Agent({
+export const voiceEnabledAgent = new Agent({
     name: "Voice Agent",
     instructions: "You are a voice assistant that can help users with their tasks.",
     model: openai("gpt-4o"),

@@ -27,7 +27,7 @@ async function textToSpeech() {
         const spinner = p.spinner();
         spinner.start('Generating response...');
 
-        const textToSpeechAgent = mastra.getAgent('textToSpeech');
+        const textToSpeechAgent = mastra.getAgent('voiceEnabledAgent');
         const { text } = await textToSpeechAgent.generate(userPrompt as string);
 
         spinner.message('Converting text to speech...');
