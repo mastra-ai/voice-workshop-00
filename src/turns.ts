@@ -44,7 +44,9 @@ async function processTurn(agent: Agent, otherAgentName: string, topic: string, 
     }
 
     // Generate text response
-    const { text } = await agent.generate(prompt);
+    const { text } = await agent.generate(prompt, {
+        temperature: 0.9
+    });
     spinner.message(`${agent.name} is speaking...`);
 
     // Convert to speech and play

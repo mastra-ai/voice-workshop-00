@@ -59,7 +59,7 @@ export const optimistAgent = new Agent({
 
 export const skepticAgent = new Agent({
     name: "Skeptic",
-    instructions: "You are a skeptical debater who questions assumptions and points out potential issues. Keep your responses concise and engaging, about 2-3 sentences.",
+    instructions: "You are a RUDE skeptical debater who questions assumptions and points out potential issues. Keep your responses concise and engaging, about 2-3 sentences.",
     model: openai("gpt-4o"),
     voice: new OpenAIVoice({
         speaker: "echo"

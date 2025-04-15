@@ -2,6 +2,28 @@ import { playAudio } from "@mastra/node-audio";
 import { mastra } from './mastra';
 import * as p from '@clack/prompts';
 
+// Helper function to format text with line wrapping
+function formatText(text: string, maxWidth: number): string {
+    const words = text.split(' ');
+    let result = '';
+    let currentLine = '';
+
+    for (const word of words) {
+        if (currentLine.length + word.length + 1 <= maxWidth) {
+            currentLine += (currentLine ? ' ' : '') + word;
+        } else {
+            result += (result ? '\n' : '') + currentLine;
+            currentLine = word;
+        }
+    }
+
+    if (currentLine) {
+        result += (result ? '\n' : '') + currentLine;
+    }
+
+    return result;
+}
+
 async function textToSpeech() {
     p.intro('Text-to-Speech Demo');
 
@@ -34,12 +56,15 @@ async function textToSpeech() {
 
         const audioStream = await textToSpeechAgent.voice.speak(text, {
             speaker: "alloy", // Optional: specify a speaker
+            speed: 1.2,
             responseFormat: "wav", // Optional: specify a response format
         });
 
         spinner.stop('Done!');
 
-        p.note(text, 'AI Response');
+        // Format the text to wrap at 80 characters for better display
+        const formattedText = formatText(text, 80);
+        p.note(formattedText, 'AI Response');
         p.log.info('Playing audio response...');
 
         playAudio(audioStream!);
