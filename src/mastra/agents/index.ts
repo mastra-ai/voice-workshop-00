@@ -5,6 +5,19 @@ import { OpenAIRealtimeVoice } from '@mastra/voice-openai-realtime';
 import { z } from 'zod';
 import { OpenAIVoice } from '@mastra/voice-openai';
 
+export const webSearchAgent = new Agent({
+    name: "Web Search Agent",
+    instructions: "You are a Voice agent tasked as a web search assistant that can help users with their tasks. Do not include markdown links in your responses.",
+    model: openai.responses("gpt-4.1"),
+    voice: new OpenAIVoice({
+        speaker: "alloy"
+    }),
+    tools: {
+        search: openai.tools.webSearchPreview()
+    }
+})
+
+
 export const voiceEnabledAgent = new Agent({
     name: "Voice Agent",
     instructions: "You are a voice assistant that can help users with their tasks.",
