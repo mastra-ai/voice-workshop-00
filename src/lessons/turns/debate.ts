@@ -1,4 +1,4 @@
-import { mastra } from './mastra';
+import { mastra } from '../../mastra';
 import { playAudio, Recorder } from '@mastra/node-audio';
 import * as p from '@clack/prompts';
 import { Agent } from '@mastra/core/agent';
