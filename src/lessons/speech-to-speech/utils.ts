@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
+import readline from "readline"
 import type { Mastra } from "@mastra/core";
-import { createHuddle } from "@mastra/node-audio";
-import { OpenAIRealtimeVoice } from "@mastra/voice-openai-realtime";
+import { createHuddle } from "@mastra/node-audio"
 import { Roark } from '@roarkanalytics/sdk';
 
 export function formatToolInvocations(toolInvocations: unknown[]): Roark.CallAnalysis.CallAnalysisCreateParams.ToolInvocation[] {
@@ -132,7 +132,10 @@ export function createConversation({
             console.error(error)
             process.exit(1)
         }
+    })
 
+    handleEnterKeypress(() => {
+        huddle.interrupt()
     })
 
     return {
@@ -159,4 +162,20 @@ export function createConversation({
             huddle.stop()
         }
     };
+}
+
+export function handleEnterKeypress(fn: () => void) {
+    readline.emitKeypressEvents(process.stdin);
+    if (process.stdin.setRawMode != null) {
+        process.stdin.setRawMode(true);
+    }
+
+    process.stdin.on("keypress", function (letter, key) {
+        if (key.ctrl && key.name === "c") {
+            process.exit();
+        }
+        if (key.name === "return") {
+            fn();
+        }
+    });
 }

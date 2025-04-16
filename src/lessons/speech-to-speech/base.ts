@@ -40,7 +40,7 @@ async function speechToSpeechServerExample() {
             // Additional custom session handling if needed
         },
         onResponseDone: async (item) => {
-            // console.log('YOOOO', item)
+            console.log('YOOOO', item)
         },
         onError: async (error) => {
             console.error(error)
