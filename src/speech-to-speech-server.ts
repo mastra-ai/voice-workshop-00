@@ -1,7 +1,15 @@
-import chalk from 'chalk';
-import { mastra } from './mastra';
-import { createHuddle } from '@mastra/node-audio';
+import * as p from '@clack/prompts';
 import type { Mastra } from '@mastra/core';
+import { createHuddle } from '@mastra/node-audio';
+import { OpenAIRealtimeVoice } from '@mastra/voice-openai-realtime';
+import { Roark } from '@roarkanalytics/sdk';
+import chalk from 'chalk';
+import { v2 as cloudinary } from 'cloudinary';
+import { mastra } from './mastra';
+
+const client = new Roark({
+    bearerToken: process.env.ROARK_API_KEY
+});
 
 function createConversation({
     mastra,
@@ -38,13 +46,13 @@ function createConversation({
         }
     }) => Promise<void> | void,
 }) {
+    const toolInvocations: unknown[] = []
     const agent = mastra.getAgent('speechToSpeechServer');
 
     agent.voice.updateConfig(providerOptions ?? {})
 
     // Set up session.updated event handler
     agent.voice.on('session.updated', async (session) => {
-        console.log('Session updated', session)
         if (onSessionUpdated) {
             await onSessionUpdated(session);
         }
@@ -59,6 +67,11 @@ function createConversation({
             onSpeaker(stream);
         }
     });
+
+    agent.voice.on('tool-result', (toolCall) => {
+        console.log('tool-result', toolCall)
+        toolInvocations.push(toolCall)
+    })
 
 
     if (onResponseDone) {
@@ -83,41 +96,34 @@ function createConversation({
 
     // TODO: We need to listen for toolcall results
     huddle.on('recorder.end', async () => {
-        onConversationEnd?.({
-            recordingPath,
-            metadata,
-            startedAt,
-            toolInvocations: [
-                {
-                    name: "bookAppointment",
-                    description: "Book an appointment",
-                    startOffsetMs: 7000,
-                    parameters: {
-                        // Parameters are submitted as key-value pairs
-                        patientName: "John Doe",
-                        patientPhone: "+1234567890",
-                        appointmentType: {
-                            // Parameter values can alternatively be objects which include the value and an optional description and type
-                            value: 'cleaning',
-                            description: 'Type of dental appointment',
-                            type: 'string',
-                        }
-                    },
-                    // Result can be a string or an object
-                    result: "success",
-                },
-            ],
-            agent: {
-                spokeFirst: !!initialMessage,
-                name: agent.name,
-                phoneNumber: '123456789'
-            }
-        })
+        try {
+            await onConversationEnd?.({
+                recordingPath,
+                metadata,
+                startedAt,
+                toolInvocations,
+                agent: {
+                    spokeFirst: !!initialMessage,
+                    name: agent.name,
+                    phoneNumber: '123456789'
+                }
+            })
+            process.exit(0)
+        } catch (error) {
+            console.error(error)
+            process.exit(1)
+        }
+
     })
 
     return {
-        agent, huddle, start: async () => {
+        agent, 
+        huddle, 
+        start: async () => {
+            const spinner = p.spinner()
+            spinner.start('Connecting...')
             await agent.voice.connect();
+            spinner.stop()
             huddle.start()
             agent.voice.send(huddle.getMicrophoneStream())
 
@@ -128,6 +134,10 @@ function createConversation({
             startedAt = new Date().toISOString();
         },
         stop: async () => {
+            if (agent.voice instanceof OpenAIRealtimeVoice) {
+                agent.voice.disconnect()
+            }
+
             huddle.stop()
         }
     };
@@ -141,8 +151,24 @@ async function speechToSpeechServerExample() {
         initialMessage: 'Howdy partner',
         onConversationEnd: async (props) => {
             // File upload
-            // Send to Roark
+            const url = await uploadToCloudinary(props.recordingPath)
 
+            // Send to Roark
+            console.log('Send to Roark', props, url)
+            const response = await client.callAnalysis.create({
+                recordingUrl: url,
+                startedAt: props.startedAt,
+                callDirection: 'INBOUND',
+                interfaceType: 'PHONE',
+                participants: [
+                  { role: 'AGENT', spokeFirst: props.agent.spokeFirst, name: props.agent.name, phoneNumber: props.agent.phoneNumber },
+                  { role: 'CUSTOMER', name: 'Jane Doe', phoneNumber: '123456789' },
+                ],
+                properties: props.metadata,
+                toolInvocations: formatToolInvocations(props.toolInvocations),
+            });
+            
+            console.log('Call Recording Posted:', response.data);
         },
         onSessionUpdated: async (session) => {
             // Additional custom session handling if needed
@@ -164,9 +190,46 @@ async function speechToSpeechServerExample() {
 
     await start();
 
-    process.on('SIGKILL', async () => {
+    process.on('SIGINT', async (e) => {
+        console.log('SIGINT', e)
         await stop();
     })
+}
+
+cloudinary.config({ 
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+    api_key: process.env.CLOUDINARY_API_KEY, 
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+async function uploadToCloudinary(path: string) {
+    const response = await cloudinary.uploader.upload(path, { resource_type: 'raw' })
+    console.log(response)
+    return response.url
+}
+
+function formatToolInvocations(toolInvocations: unknown[]): Roark.CallAnalysis.CallAnalysisCreateParams.ToolInvocation[] {
+    // [
+    //     {
+    //         name: "bookAppointment",
+    //         description: "Book an appointment",
+    //         startOffsetMs: 7000,
+    //         parameters: {
+    //             // Parameters are submitted as key-value pairs
+    //             patientName: "John Doe",
+    //             patientPhone: "+1234567890",
+    //             appointmentType: {
+    //                 // Parameter values can alternatively be objects which include the value and an optional description and type
+    //                 value: 'cleaning',
+    //                 description: 'Type of dental appointment',
+    //                 type: 'string',
+    //             }
+    //         },
+    //         // Result can be a string or an object
+    //         result: "success",
+    //     },
+    // ]
+    return toolInvocations as Roark.CallAnalysis.CallAnalysisCreateParams.ToolInvocation[]
 }
 
 speechToSpeechServerExample().catch(console.error)
