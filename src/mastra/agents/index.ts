@@ -32,7 +32,7 @@ export const speechToSpeechServer = new Agent({
             execute: async ({ context }) => {
                 return { message: `Hello ${context.name}!` }
             }
-        })
+        }),
     }
 });
 
