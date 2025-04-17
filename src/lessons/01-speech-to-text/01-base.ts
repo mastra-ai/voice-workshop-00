@@ -2,7 +2,7 @@ import { OpenAIVoice } from "@mastra/voice-openai";
 import { createReadStream } from "fs";
 import path from "path";
 
-async function textToSpeechUsage() {
+async function speechToTextUsage() {
     const voice = new OpenAIVoice()
 
     const audioStream = createReadStream(path.join(__dirname, './audio.mp3'))
@@ -12,4 +12,4 @@ async function textToSpeechUsage() {
     console.log(transcript)
 }
 
-textToSpeechUsage().catch(console.error)
+speechToTextUsage().catch(console.error)

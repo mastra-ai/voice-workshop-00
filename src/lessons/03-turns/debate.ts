@@ -103,13 +103,13 @@ async function runDebate() {
     const skeptic = mastra.getAgent('skepticAgent');
 
     p.log.info(`Starting a debate on: ${topic}`);
-    p.log.info('The debate will continue for 3 turns each. Press Ctrl+C to exit at any time.');
+    p.log.info('The debate will continue for 1 turn each. Press Ctrl+C to exit at any time.');
 
     // Run the debate for a few turns
     let agent1Response = "";
     let agent2Response = "";
 
-    for (let turn = 1; turn <= 3; turn++) {
+    for (let turn = 1; turn <= 1; turn++) {
         p.log.step(`Turn ${turn}`);
 
         // Agent 1's turn
