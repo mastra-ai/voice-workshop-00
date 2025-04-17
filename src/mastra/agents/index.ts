@@ -13,6 +13,7 @@ export const webSearchAgent = new Agent({
         speaker: "alloy"
     }),
     tools: {
+        search: openai.tools.webSearchPreview()
     }
 })
 
@@ -31,7 +32,7 @@ export const speechToSpeechServer = new Agent({
             execute: async ({ context }) => {
                 return { message: `Hello ${context.name}!` }
             }
-        }),
+        })
     }
 });
 
