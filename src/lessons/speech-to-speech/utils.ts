@@ -63,7 +63,7 @@ export function createConversation({
     initialMessage?: string,
     metadata?: Record<string, string>,
     onConversationEnd?: (props: {
-        recordingPath: string,
+        audioBuffer: Buffer,
         startedAt: string,
         metadata?: Record<string, string>,
         toolInvocations: any[],
@@ -138,31 +138,12 @@ export function createConversation({
         }
     })
 
-    // TODO: We need to listen for toolcall results
-    huddle.on('recorder.end', async () => {
-        console.log('recorder.end')
-        try {
-            await onConversationEnd?.({
-                recordingPath,
-                metadata,
-                startedAt: new Date(startedAt).toISOString(),
-                toolInvocations,
-                agent: {
-                    spokeFirst: !!initialMessage,
-                    name: agent.name,
-                    phoneNumber: '123456789'
-                }
-            })
-            process.exit(0)
-        } catch (error) {
-            console.error(error)
-            process.exit(1)
-        }
-    })
-
     handleEnterKeypress(() => {
         huddle.interrupt()
     })
+
+    const audioChunks: Buffer[] = [];
+    const recorderStream = (huddle as any).recorder.stream;
 
     return {
         agent,
@@ -173,6 +154,9 @@ export function createConversation({
             await agent.voice.connect();
             spinner.stop()
             huddle.start()
+            recorderStream.on('data', (chunk: Buffer) => {
+                audioChunks.push(chunk)
+            })
             agent.voice.send(huddle.getMicrophoneStream())
 
             if (initialMessage) {
@@ -185,7 +169,26 @@ export function createConversation({
             // if (agent.voice instanceof OpenAIRealtimeVoice) {
             //     agent.voice.disconnect()
             // }
-            huddle.stop()
+            
+            try {
+                huddle.stop();
+                recorderStream.end();
+                await onConversationEnd?.({
+                    audioBuffer: Buffer.concat(audioChunks),
+                    metadata,
+                    startedAt: new Date(startedAt).toISOString(),
+                    toolInvocations,
+                    agent: {
+                        spokeFirst: !!initialMessage,
+                        name: agent.name,
+                        phoneNumber: '123456789'
+                    }
+                })
+                process.exit(0)
+            } catch (error) {
+                console.error(error)
+                process.exit(1)
+            }
         }
     };
 }
