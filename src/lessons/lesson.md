@@ -11,16 +11,8 @@ This workshop demonstrates how to add these voice capabilities to your Mastra ag
 Mastra provides a unified API for voice interactions that includes:
 
 - **Text-to-Speech (TTS)**: Convert text to natural-sounding speech
-  - Multiple provider options (OpenAI, Azure, etc.)
-  - Customizable voice characteristics
-  
 - **Speech-to-Text (STT)**: Convert spoken audio to text
-  - Real-time transcription
-  - Support for various audio formats
-  
 - **Speech-to-Speech (STS)**: Enable real-time voice conversations
-  - Direct audio-to-audio conversion
-  - Real-time streaming capabilities
 
 ## Lesson 1: Text to Speech
 
@@ -36,12 +28,35 @@ Mastra provides a unified API for voice interactions that includes:
   - Using `agent.voice.speak()`
   - Customizing speech parameters
 
-## Speech to Text
+## Lesson 2: Speech to Text
 
-- base.ts
-  - Introduce a Mastra Voice provider `OpenAI`, you can use many providers.
-  - Full list is [here](https://mastra.ai/docs/voice/speech-to-text#available-providers)
-  - Introduce the `listen` method
-- agent.ts
-  - Show adding voice to an Agent.
-  - Introduce the `listen` method on `agent.voice`
+### Examples:
+- **base.ts**: Basic speech recognition
+  - Using OpenAI's voice provider
+  - Using the `listen` method
+  - Processing audio files
+  - [Available providers](https://mastra.ai/docs/voice/speech-to-text#available-providers)
+
+- **agent.ts**: Adding voice recognition to agents
+  - Integrating voice with Mastra agents
+  - Using `agent.voice.listen()`
+  - Interactive microphone input
+
+## Lesson 3: Agent Conversations
+
+### Examples:
+- **debate.ts**: Multi-agent conversation system
+  - Two agents with different perspectives (Optimist and Skeptic)
+  - Turn-based conversation flow
+  - Audio recording and playback
+  - Interactive topic selection
+
+## Lesson 4: Speech to Speech
+
+### Examples:
+- **base.ts**: Complete voice conversation system
+  - Real-time voice conversation with agents
+  - Conversation recording and management
+  - Cloud storage integration (Cloudinary)
+  - Analytics integration (Roark)
+  - Event-driven lifecycle hooks
