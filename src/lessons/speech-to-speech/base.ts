@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { mastra } from '../../mastra';
 import { createConversation, formatToolInvocations } from './utils';
 import { uploadToCloudinary } from './upload';
+import fs from 'fs';
 
 const client = new Roark({
     bearerToken: process.env.ROARK_API_KEY
@@ -17,6 +18,7 @@ async function speechToSpeechServerExample() {
         initialMessage: 'Howdy partner',
         onConversationEnd: async (props) => {
             // File upload
+            fs.writeFileSync(props.recordingPath, props.audioBuffer)
             const url = await uploadToCloudinary(props.recordingPath)
 
             // Send to Roark

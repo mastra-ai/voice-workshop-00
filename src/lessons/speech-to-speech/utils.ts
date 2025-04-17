@@ -47,7 +47,7 @@ export function createConversation({
     onWriting,
     initialMessage,
     metadata,
-    onConversationEnd
+    onConversationEnd,
 }: {
     mastra: Mastra,
     recordingPath: string,
@@ -63,6 +63,7 @@ export function createConversation({
     initialMessage?: string,
     metadata?: Record<string, string>,
     onConversationEnd?: (props: {
+        audioBuffer: Buffer,
         recordingPath: string,
         startedAt: string,
         metadata?: Record<string, string>,
@@ -138,31 +139,11 @@ export function createConversation({
         }
     })
 
-    // TODO: We need to listen for toolcall results
-    huddle.on('recorder.end', async () => {
-        console.log('recorder.end')
-        try {
-            await onConversationEnd?.({
-                recordingPath,
-                metadata,
-                startedAt: new Date(startedAt).toISOString(),
-                toolInvocations,
-                agent: {
-                    spokeFirst: !!initialMessage,
-                    name: agent.name,
-                    phoneNumber: '123456789'
-                }
-            })
-            process.exit(0)
-        } catch (error) {
-            console.error(error)
-            process.exit(1)
-        }
-    })
-
     handleEnterKeypress(() => {
         huddle.interrupt()
     })
+
+    const audioChunks: Buffer[] = [];
 
     return {
         agent,
@@ -173,6 +154,10 @@ export function createConversation({
             await agent.voice.connect();
             spinner.stop()
             huddle.start()
+            const recorderStream = (huddle as any).recorder.stream;
+            recorderStream.on('data', (chunk: Buffer) => {
+                audioChunks.push(chunk)
+            })
             agent.voice.send(huddle.getMicrophoneStream())
 
             if (initialMessage) {
@@ -185,7 +170,28 @@ export function createConversation({
             // if (agent.voice instanceof OpenAIRealtimeVoice) {
             //     agent.voice.disconnect()
             // }
-            huddle.stop()
+            
+            try {
+                huddle.stop();
+                const recorderStream = (huddle as any).recorder.stream;
+                recorderStream.end();
+                await onConversationEnd?.({
+                    audioBuffer: Buffer.concat(audioChunks),
+                    recordingPath,
+                    metadata,
+                    startedAt: new Date(startedAt).toISOString(),
+                    toolInvocations,
+                    agent: {
+                        spokeFirst: !!initialMessage,
+                        name: agent.name,
+                        phoneNumber: '123456789'
+                    }
+                })
+                process.exit(0)
+            } catch (error) {
+                console.error(error)
+                process.exit(1)
+            }
         }
     };
 }

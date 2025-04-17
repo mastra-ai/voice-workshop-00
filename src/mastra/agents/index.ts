@@ -4,7 +4,6 @@ import { Agent } from '@mastra/core/agent';
 import { OpenAIRealtimeVoice } from '@mastra/voice-openai-realtime';
 import { z } from 'zod';
 import { OpenAIVoice } from '@mastra/voice-openai';
-import { mcpTools } from '../tools';
 
 export const webSearchAgent = new Agent({
     name: "Web Search Agent",
@@ -33,8 +32,7 @@ export const speechToSpeechServer = new Agent({
             execute: async ({ context }) => {
                 return { message: `Hello ${context.name}!` }
             }
-        }),
-        ...mcpTools
+        })
     }
 });
 
