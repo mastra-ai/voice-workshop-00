@@ -1,3 +1,13 @@
+/**
+ * This example demonstrates a complete voice conversation system with analytics.
+ * Features:
+ * - Real-time speech-to-speech conversation with a Mastra agent
+ * - Conversation recording and audio file management
+ * - Integration with Roark Analytics for call analysis
+ * - Event hooks for conversation lifecycle management
+ * - Cloudinary integration for audio file storage
+ */
+
 import { Roark } from '@roarkanalytics/sdk';
 import chalk from 'chalk';
 

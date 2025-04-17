@@ -1,3 +1,8 @@
+/**
+ * This example demonstrates basic speech-to-text conversion using OpenAI.
+ * It reads an audio file and transcribes its content to text using @mastra/voice-openai.
+ */
+
 import { OpenAIVoice } from "@mastra/voice-openai";
 import { createReadStream } from "fs";
 import path from "path";
