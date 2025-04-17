@@ -1,26 +1,40 @@
+# Mastra Voice Workshop Lessons
+
 ## Introduction
 
-- Voice enabled agents are becoming increasingly popular.
-- Rather than be a "Voice" Agent Framework. We are adding the ability to bring Voice to your agents.
-- Levels of Voice Agents. The term "Voice" is a bit overloaded. Let's walk through the different pieces involved.
+Voice enabled agents are becoming increasingly popular. Rather than be a "Voice" Agent Framework, we are adding the ability to bring Voice to your agents. The term "Voice" is a bit overloaded, so let's walk through the different pieces involved.
 
-## Voice
+This workshop demonstrates how to add these voice capabilities to your Mastra agents through a series of progressive lessons. Each lesson builds upon the previous one, introducing new concepts and features.
 
-- Unified API
-  - TTS (Text-to-Speech) for synthesizing spoken audio from text using various providers
-  - STT (Speech-to-Text) for transcribing audio to text
-  - STS (Speech-to-Speech) for converting audio to audio using realtime models
+## Voice Capabilities Overview
 
-## Text to Speech
+Mastra provides a unified API for voice interactions that includes:
 
-- base.ts
-  - Introduce a Mastra Voice provider `OpenAI`, you can use many providers.
-  - Full list is [here](https://mastra.ai/docs/voice/text-to-speech#available-providers)
-  - We want to personify our agents, so we used the word 'speak'
-  - Introduce the `speak` method
-- agent.ts
-  - Show adding voice to an Agent.
-  - Introduce the `speak` method on `agent.voice`
+- **Text-to-Speech (TTS)**: Convert text to natural-sounding speech
+  - Multiple provider options (OpenAI, Azure, etc.)
+  - Customizable voice characteristics
+  
+- **Speech-to-Text (STT)**: Convert spoken audio to text
+  - Real-time transcription
+  - Support for various audio formats
+  
+- **Speech-to-Speech (STS)**: Enable real-time voice conversations
+  - Direct audio-to-audio conversion
+  - Real-time streaming capabilities
+
+## Lesson 1: Text to Speech
+
+### Examples:
+- **base.ts**: Basic text-to-speech conversion
+  - Using OpenAI's voice provider
+  - Configuring voice settings
+  - Using the `speak` method
+  - [Available providers](https://mastra.ai/docs/voice/text-to-speech#available-providers)
+
+- **agent.ts**: Adding voice to agents
+  - Integrating voice with Mastra agents
+  - Using `agent.voice.speak()`
+  - Customizing speech parameters
 
 ## Speech to Text
 
