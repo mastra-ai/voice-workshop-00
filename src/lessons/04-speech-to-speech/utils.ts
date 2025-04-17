@@ -103,27 +103,25 @@ export function createConversation({
         agent.voice.on('writing', onWriting);
     }
 
-    const toolInvocationDuration = new Map<string, number>();
+    const toolInvocationStartedAt = new Map<string, number>();
 
     if (onToolCallStart) {
         agent.voice.on('tool-call-start', (data: unknown) => {
             const toolCall = data as ToolCallStart;
-            console.log('tool-start', toolCall)
             onToolCallStart(toolCall);
-            toolInvocationDuration.set(toolCall.toolCallId, Date.now());
+            toolInvocationStartedAt.set(toolCall.toolCallId, Date.now() - startedAt);
         })
     }
 
     if (onToolCallResult) {
         agent.voice.on('tool-call-result', (data: unknown) => {
             const toolCall = data as ToolCallResult;
-            console.log('tool-result', toolCall)
-            onToolCallResult(toolCall);
-            const startOffsetMs = Date.now() - startedAt;
-            (toolCall as any).startOffsetMs = startOffsetMs;
+            const startOffsetMs = toolInvocationStartedAt.get(toolCall.toolCallId);
+            toolCall.startOffsetMs = startOffsetMs;
             toolInvocations.push(toolCall)
         })
     }
+
 
     if (onResponseCreated) {
         agent.voice.on('response.created', onResponseCreated);
@@ -136,7 +134,7 @@ export function createConversation({
     const huddle = createHuddle({
         record: {
             outputPath: recordingPath,
-        }
+        },
     })
 
     handleEnterKeypress(() => {
@@ -167,10 +165,6 @@ export function createConversation({
             startedAt = Date.now();
         },
         stop: async () => {
-            // if (agent.voice instanceof OpenAIRealtimeVoice) {
-            //     agent.voice.disconnect()
-            // }
-            
             try {
                 huddle.stop();
                 const recorderStream = (huddle as any).recorder.stream;

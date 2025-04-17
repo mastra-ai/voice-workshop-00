@@ -13,11 +13,7 @@ async function textToSpeech() {
     s.start('Generating text...');
 
     const { text } = await agent.generate(`
-        Search for the latest news about the Lakers and synthesize the headlines only. 
-        3 sentences max.
-        Do not include any additional context.
-        No links.
-        `)
+        Search for the latest news about the Lakers and synthesize the headlines only. 3 Headlines only.`)
 
     s.stop('Text generated')
 

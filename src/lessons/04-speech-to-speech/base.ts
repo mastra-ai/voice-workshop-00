@@ -22,7 +22,7 @@ async function speechToSpeechServerExample() {
             const url = await uploadToCloudinary(props.recordingPath)
 
             // Send to Roark
-            console.log('Send to Roark', props, url)
+            console.log('Send to Roark', url)
             const response = await client.callAnalysis.create({
                 recordingUrl: url,
                 startedAt: props.startedAt,
@@ -69,7 +69,6 @@ async function speechToSpeechServerExample() {
     await start();
 
     process.on('SIGINT', async (e) => {
-        console.log('SIGINT', e)
         await stop();
     })
 }

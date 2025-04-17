@@ -4,25 +4,45 @@ import { Agent } from '@mastra/core/agent';
 import { OpenAIRealtimeVoice } from '@mastra/voice-openai-realtime';
 import { z } from 'zod';
 import { OpenAIVoice } from '@mastra/voice-openai';
+import { CompositeVoice } from '@mastra/core/voice';
+import { DeepgramVoice } from '@mastra/voice-deepgram';
+import { weatherTool } from '../tools';
 
-export const webSearchAgent = new Agent({
-    name: "Web Search Agent",
-    instructions: "You are a Voice agent tasked as a web search assistant that can help users with their tasks. Do not include markdown links in your responses.",
-    model: openai.responses("gpt-4.1"),
-    voice: new OpenAIVoice({
-        speaker: "alloy"
-    }),
+// Agent with both STT and TTS from single provider
+export const agent = new Agent({
+    name: "Agent",
+    instructions: "You are a Voice agent that can help users with their tasks.",
+    model: openai("gpt-4o"),
+    voice: new OpenAIVoice(),
     tools: {
         search: openai.tools.webSearchPreview()
     }
 })
 
-// Have the agent do something
+// Agent with both STT and TTS from different providers
+const compositeVoice = new CompositeVoice({
+    input: new DeepgramVoice(),
+    output: new OpenAIVoice({
+        speaker: "alloy"
+    }),
+})
+
+export const webSearchAgent = new Agent({
+    name: "Web Search Agent",
+    instructions: "You are a Voice agent tasked as a web search assistant that can help users with their tasks. Do not include markdown links in your responses. 2 sentences MAX. Do not include any additional context. No links.",
+    model: openai.responses("gpt-4.1"),
+    voice: compositeVoice,
+    tools: {
+        search: openai.tools.webSearchPreview()
+    }
+})
+
+// Agent with both STT and TTS with realtime provider
 export const speechToSpeechServer = new Agent({
     name: 'mastra',
-    instructions: 'You are a helpful assistant.',
-    voice: new OpenAIRealtimeVoice(),
+    instructions: 'You are a helpful assistant, respond in short concise sentences. Max 1 sentence.',
     model: openai('gpt-4o'),
+    voice: new OpenAIRealtimeVoice(),
     tools: {
         salutationTool: createTool({
             id: 'salutationTool',
@@ -32,10 +52,10 @@ export const speechToSpeechServer = new Agent({
             execute: async ({ context }) => {
                 return { message: `Hello ${context.name}!` }
             }
-        })
+        }),
+        weatherTool,
     }
 });
-
 
 export const optimistAgent = new Agent({
     name: "Optimist",
