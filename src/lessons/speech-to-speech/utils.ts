@@ -5,30 +5,33 @@ import { createHuddle } from "@mastra/node-audio"
 import { Roark } from '@roarkanalytics/sdk';
 
 export function formatToolInvocations(toolInvocations: unknown[]): Roark.CallAnalysis.CallAnalysisCreateParams.ToolInvocation[] {
-    // [
-    //     {
-    //         name: "bookAppointment",
-    //         description: "Book an appointment",
-    //         startOffsetMs: 7000,
-    //         parameters: {
-    //             // Parameters are submitted as key-value pairs
-    //             patientName: "John Doe",
-    //             patientPhone: "+1234567890",
-    //             appointmentType: {
-    //                 // Parameter values can alternatively be objects which include the value and an optional description and type
-    //                 value: 'cleaning',
-    //                 description: 'Type of dental appointment',
-    //                 type: 'string',
-    //             }
-    //         },
-    //         // Result can be a string or an object
-    //         result: "success",
-    //     },
-    // ]
-    console.log(toolInvocations);
-    return toolInvocations as Roark.CallAnalysis.CallAnalysisCreateParams.ToolInvocation[]
+    const toolInvocationsFormatted = toolInvocations.map((toolInvocation: unknown) => {
+        const toolCall = toolInvocation as ToolCallResult;
+        return {
+            name: toolCall.toolName,
+            description: toolCall.toolDescription,
+            startOffsetMs: toolCall.startOffsetMs,
+            parameters: toolCall.args,
+            result: toolCall.result
+        }
+    })
+    return toolInvocationsFormatted as Roark.CallAnalysis.CallAnalysisCreateParams.ToolInvocation[]
 }
 
+type ToolCallStart = {
+    toolCallId: string,
+    toolName: string,
+    toolDescription: string,
+}
+
+type ToolCallResult = {
+    toolCallId: string,
+    toolName: string,
+    toolDescription: string,
+    startOffsetMs?: number,
+    args: Record<string, unknown>,
+    result: Record<string, unknown>,
+}
 
 export function createConversation({
     mastra,
@@ -37,6 +40,9 @@ export function createConversation({
     onSessionUpdated,
     onSpeaker,
     onResponseDone,
+    onResponseCreated,
+    onToolCallStart,
+    onToolCallResult,
     onError,
     onWriting,
     initialMessage,
@@ -49,6 +55,9 @@ export function createConversation({
     onSessionUpdated?: (session: any) => Promise<void> | void,
     onSpeaker?: (stream: any) => Promise<void> | void,
     onResponseDone?: (item: any) => Promise<void> | void,
+    onResponseCreated?: (item: any) => Promise<void> | void,
+    onToolCallStart?: (toolCall: ToolCallStart) => Promise<void> | void,
+    onToolCallResult?: (toolCall: ToolCallResult) => Promise<void> | void,
     onError?: (error: any) => Promise<void> | void,
     onWriting?: (ev: any) => void,
     initialMessage?: string,
@@ -67,17 +76,15 @@ export function createConversation({
 }) {
     const toolInvocations: unknown[] = []
     const agent = mastra.getAgent('speechToSpeechServer');
+    let startedAt = Date.now();
 
     agent.voice.updateConfig(providerOptions ?? {})
 
-    // Set up session.updated event handler
     agent.voice.on('session.updated', async (session) => {
         if (onSessionUpdated) {
             await onSessionUpdated(session);
         }
     })
-
-    // Set up other event handlers
 
     agent.voice.on('speaker', (stream) => {
         huddle.play(stream)
@@ -87,16 +94,6 @@ export function createConversation({
         }
     });
 
-    agent.voice.on('tool-result', (toolCall) => {
-        console.log('tool-result', toolCall)
-        toolInvocations.push(toolCall)
-    })
-
-
-    if (onResponseDone) {
-        agent.voice.on('response.done', onResponseDone);
-    }
-
     if (onError) {
         agent.voice.on('error', onError);
     }
@@ -105,21 +102,50 @@ export function createConversation({
         agent.voice.on('writing', onWriting);
     }
 
+    const toolInvocationDuration = new Map<string, number>();
+
+    if (onToolCallStart) {
+        agent.voice.on('tool-call-start', (data: unknown) => {
+            const toolCall = data as ToolCallStart;
+            console.log('tool-start', toolCall)
+            onToolCallStart(toolCall);
+            toolInvocationDuration.set(toolCall.toolCallId, Date.now());
+        })
+    }
+
+    if (onToolCallResult) {
+        agent.voice.on('tool-call-result', (data: unknown) => {
+            const toolCall = data as ToolCallResult;
+            console.log('tool-result', toolCall)
+            onToolCallResult(toolCall);
+            const startOffsetMs = Date.now() - startedAt;
+            (toolCall as any).startOffsetMs = startOffsetMs;
+            toolInvocations.push(toolCall)
+        })
+    }
+
+    if (onResponseCreated) {
+        agent.voice.on('response.created', onResponseCreated);
+    }
+
+    if (onResponseDone) {
+        agent.voice.on('response.done', onResponseDone);
+    }
+
     const huddle = createHuddle({
         record: {
             outputPath: recordingPath,
         }
     })
 
-    let startedAt = new Date().toISOString();
-
     // TODO: We need to listen for toolcall results
     huddle.on('recorder.end', async () => {
+        console.log('recorder.end')
         try {
             await onConversationEnd?.({
                 recordingPath,
                 metadata,
-                startedAt,
+                startedAt: new Date(startedAt).toISOString(),
                 toolInvocations,
                 agent: {
                     spokeFirst: !!initialMessage,
@@ -153,7 +179,7 @@ export function createConversation({
                 await agent.voice.speak(initialMessage)
             }
 
-            startedAt = new Date().toISOString();
+            startedAt = Date.now();
         },
         stop: async () => {
             // if (agent.voice instanceof OpenAIRealtimeVoice) {

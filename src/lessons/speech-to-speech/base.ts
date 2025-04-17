@@ -28,7 +28,7 @@ async function speechToSpeechServerExample() {
                 interfaceType: 'PHONE',
                 participants: [
                     { role: 'AGENT', spokeFirst: props.agent.spokeFirst, name: props.agent.name, phoneNumber: props.agent.phoneNumber },
-                    { role: 'CUSTOMER', name: 'Jane Doe', phoneNumber: '123456789' },
+                    { role: 'CUSTOMER', name: 'Yujohn Nattrass', phoneNumber: '987654321' },
                 ],
                 properties: props.metadata,
                 toolInvocations: formatToolInvocations(props.toolInvocations),
@@ -36,19 +36,30 @@ async function speechToSpeechServerExample() {
 
             console.log('Call Recording Posted:', response.data);
         },
+        onSpeaker: async (stream) => {
+            // Additional custom speaker handling if needed
+        },
         onSessionUpdated: async (session) => {
             // Additional custom session handling if needed
         },
         onResponseDone: async (item) => {
-            console.log('YOOOO', item)
+            // Additional custom response handling if needed
+        },
+        onResponseCreated: async (item) => {
+            // Additional custom response handling if needed
         },
         onError: async (error) => {
             console.error(error)
         },
+        onToolCallStart: async (toolCall) => {
+            // Additional custom tool call start handling if needed
+        },
+        onToolCallResult: async (toolCall) => {
+            // Additional custom tool call result handling if needed
+        },
         onWriting: (ev) => {
-            const color = ev.role === "user" ? chalk.green : chalk.blue;
             if (ev.role === 'assistant') {
-                process.stdout.write(color(ev.text));
+                process.stdout.write(chalk.blue(ev.text));
             }
         },
     });
