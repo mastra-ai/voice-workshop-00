@@ -1,3 +1,12 @@
+/**
+ * This example demonstrates an interactive speech-to-text application using Mastra agents.
+ * It captures live microphone input, transcribes the speech, and generates an AI response.
+ * Features:
+ * - Real-time microphone recording using @mastra/node-audio
+ * - Interactive CLI interface with @clack/prompts
+ * - AI agent response generation
+ */
+
 import { mastra } from "../../mastra";
 import { getMicrophone } from "@mastra/node-audio";
 import * as p from "@clack/prompts";

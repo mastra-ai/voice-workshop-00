@@ -1,3 +1,9 @@
+/**
+ * This example demonstrates basic text-to-speech conversion using OpenAI.
+ * It converts a simple text message into spoken audio and plays it back
+ * using @mastra/node-audio for playback and @mastra/voice-openai for synthesis.
+ */
+
 import { playAudio } from "@mastra/node-audio";
 import { OpenAIVoice } from "@mastra/voice-openai";
 

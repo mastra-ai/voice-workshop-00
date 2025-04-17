@@ -1,3 +1,13 @@
+/**
+ * This example demonstrates a multi-agent conversation system using Mastra.
+ * Features:
+ * - Two AI agents (optimist and skeptic) engage in a debate on a user-chosen topic
+ * - Turn-based conversation flow with context awareness
+ * - Text-to-speech synthesis for each agent's responses
+ * - Audio recording of the entire debate
+ * - Interactive user control over debate duration
+ */
+
 import { mastra } from '../../mastra';
 import { playAudio, Recorder } from '@mastra/node-audio';
 import * as p from '@clack/prompts';
@@ -109,7 +119,7 @@ async function runDebate() {
     let agent1Response = "";
     let agent2Response = "";
 
-    for (let turn = 1; turn <= 1; turn++) {
+    for (let turn = 1; turn <= 3; turn++) {
         p.log.step(`Turn ${turn}`);
 
         // Agent 1's turn

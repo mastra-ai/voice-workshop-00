@@ -1,3 +1,11 @@
+/**
+ * This example demonstrates text-to-speech using Mastra agents.
+ * Features:
+ * - Uses an AI agent to generate dynamic content (Lakers news headlines)
+ * - Text preprocessing (markdown link stripping)
+ * - Customized speech synthesis with speed adjustment
+ */
+
 import { mastra } from "../../mastra";
 import * as p from "@clack/prompts";
 import chalk from "chalk";
