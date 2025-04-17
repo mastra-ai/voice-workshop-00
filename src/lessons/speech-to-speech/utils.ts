@@ -47,7 +47,7 @@ export function createConversation({
     onWriting,
     initialMessage,
     metadata,
-    onConversationEnd
+    onConversationEnd,
 }: {
     mastra: Mastra,
     recordingPath: string,
@@ -64,6 +64,7 @@ export function createConversation({
     metadata?: Record<string, string>,
     onConversationEnd?: (props: {
         audioBuffer: Buffer,
+        recordingPath: string,
         startedAt: string,
         metadata?: Record<string, string>,
         toolInvocations: any[],
@@ -176,6 +177,7 @@ export function createConversation({
                 recorderStream.end();
                 await onConversationEnd?.({
                     audioBuffer: Buffer.concat(audioChunks),
+                    recordingPath,
                     metadata,
                     startedAt: new Date(startedAt).toISOString(),
                     toolInvocations,

@@ -18,8 +18,8 @@ async function speechToSpeechServerExample() {
         initialMessage: 'Howdy partner',
         onConversationEnd: async (props) => {
             // File upload
-            fs.writeFileSync('./speech-to-speech-server.mp3', props.audioBuffer)
-            const url = await uploadToCloudinary('./speech-to-speech-server.mp3')
+            fs.writeFileSync(props.recordingPath, props.audioBuffer)
+            const url = await uploadToCloudinary(props.recordingPath)
 
             // Send to Roark
             console.log('Send to Roark', props, url)
