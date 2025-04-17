@@ -4,7 +4,7 @@ import { OpenAIVoice } from "@mastra/voice-openai";
 async function textToSpeechUsage() {
     const voice = new OpenAIVoice()
 
-    const audioStream = await voice.speak('Hello, how are you?', {
+    const audioStream = await voice.speak('Hello, how are you doing today?', {
         responseFormat: 'wav',
     })
 

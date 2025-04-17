@@ -31,3 +31,28 @@
 - agent.ts
   - Show adding voice to an Agent.
   - Introduce the `listen` method on `agent.voice`
+
+## Speech to Speech
+- 
+<!-- - base.ts
+  - Introduce a Mastra Voice provider `OpenAI`, you can use many providers.
+  - Full list is [here](https://mastra.ai/docs/voice/speech-to-speech#available-providers)
+  - Introduce the `speak` method
+- agent.ts
+  - Show adding voice to an Agent.
+  - Introduce the `speak` method on `agent.voice` -->
+
+## TODO
+- implement tools function
+- turns script
+
+- node-audio package
+  - playaudio
+  - getMicrophone
+  - createHuddle
+  - https://github.com/mastra-ai/node-audio
+
+- debate
+  - more complex TTS example
+  - node-audio package
+  - capstone TTS
