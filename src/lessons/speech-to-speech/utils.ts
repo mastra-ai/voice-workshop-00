@@ -143,7 +143,6 @@ export function createConversation({
     })
 
     const audioChunks: Buffer[] = [];
-    const recorderStream = (huddle as any).recorder.stream;
 
     return {
         agent,
@@ -154,6 +153,7 @@ export function createConversation({
             await agent.voice.connect();
             spinner.stop()
             huddle.start()
+            const recorderStream = (huddle as any).recorder.stream;
             recorderStream.on('data', (chunk: Buffer) => {
                 audioChunks.push(chunk)
             })
@@ -172,6 +172,7 @@ export function createConversation({
             
             try {
                 huddle.stop();
+                const recorderStream = (huddle as any).recorder.stream;
                 recorderStream.end();
                 await onConversationEnd?.({
                     audioBuffer: Buffer.concat(audioChunks),
